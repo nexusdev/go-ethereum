@@ -1651,6 +1651,24 @@ func (api *PrivateDebugAPI) ChaindbProperty(property string) (string, error) {
 	return ldb.LDB().GetProperty(property)
 }
 
+func (api *PrivateDebugAPI) ChaindbValue(key string) (string, error) {
+	ldb, ok := api.eth.chainDb.(interface {
+		LDB() *leveldb.DB
+	})
+	if !ok {
+		return "", fmt.Errorf("chaindbValue does not work for memory databases")
+	}
+        decodedKey, error := hex.DecodeString(key)
+	if error != nil {
+		return "", error
+	}
+        encodedValue, error := ldb.LDB().Get(decodedKey, nil)
+	if error != nil {
+		return "", error
+	}
+        return common.ToHex(encodedValue), nil
+}
+
 // BlockTraceResult is the returned value when replaying a block to check for
 // consensus results and full VM trace logs for all included transactions.
 type BlockTraceResult struct {
