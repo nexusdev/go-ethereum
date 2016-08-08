@@ -1894,6 +1894,7 @@ func (api *PrivateDebugAPI) TraceTransaction(txHash common.Hash, logger *vm.LogC
 			if err != nil {
 				return nil, fmt.Errorf("mutation failed: %v", err)
 			}
+			stateDb.DeleteSuicides()
 			continue
 		}
 		// Otherwise trace the transaction and return

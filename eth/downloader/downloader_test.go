@@ -55,7 +55,7 @@ func init() {
 // reassembly.
 func makeChain(n int, seed byte, parent *types.Block, parentReceipts types.Receipts, heavy bool) ([]common.Hash, map[common.Hash]*types.Header, map[common.Hash]*types.Block, map[common.Hash]types.Receipts) {
 	// Generate the block chain
-	blocks, receipts := core.GenerateChain(parent, testdb, n, func(i int, block *core.BlockGen) {
+	blocks, receipts := core.GenerateChain(nil, parent, testdb, n, func(i int, block *core.BlockGen) {
 		block.SetCoinbase(common.Address{seed})
 
 		// If a heavy chain is requested, delay blocks to raise difficulty
@@ -1824,13 +1824,15 @@ func testFastCriticalRestarts(t *testing.T, protocol int) {
 	for i := 0; i < fsPivotInterval; i++ {
 		tester.peerMissingStates["peer"][headers[hashes[fsMinFullBlocks+i]].Root] = true
 	}
+	tester.downloader.dropPeer = func(id string) {} // We reuse the same "faulty" peer throughout the test
+
 	// Synchronise with the peer a few times and make sure they fail until the retry limit
 	for i := 0; i < fsCriticalTrials; i++ {
 		// Attempt a sync and ensure it fails properly
 		if err := tester.sync("peer", nil, FastSync); err == nil {
 			t.Fatalf("failing fast sync succeeded: %v", err)
 		}
-		time.Sleep(500 * time.Millisecond) // Make sure no in-flight requests remain
+		time.Sleep(100 * time.Millisecond) // Make sure no in-flight requests remain
 
 		// If it's the first failure, pivot should be locked => reenable all others to detect pivot changes
 		if i == 0 {
