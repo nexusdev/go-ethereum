@@ -1431,6 +1431,26 @@ func (api *PrivateDebugAPI) ChaindbCompact() error {
 	return nil
 }
 
+func (api *PrivateDebugAPI) ChaindbValue(key string) (string, error) {
+	ldb, ok := api.b.ChainDb().(interface {
+		LDB() *leveldb.DB
+	})
+  if !ok {
+    return "", fmt.Errorf("chaindbValue does not work for memory databases")
+  }
+  decodedKey, error := hex.DecodeString(key)
+  if error != nil {
+    return "", error
+  }
+  encodedValue, error := ldb.LDB().Get(decodedKey, nil)
+  if error != nil {
+    return "", error
+  }
+  return common.ToHex(encodedValue), nil
+}
+
+
+
 // SetHead rewinds the head of the blockchain to a previous block.
 func (api *PrivateDebugAPI) SetHead(number hexutil.Uint64) {
 	api.b.SetHead(uint64(number))
